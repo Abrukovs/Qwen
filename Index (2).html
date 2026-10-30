@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportPredict — Умные прогнозы на спорт</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2d3748;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo {
+            font-size: 24px; font-weight: bold;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        nav ul { display: flex; list-style: none; gap: 30px; }
+        nav a { color: #4a5568; text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        nav a:hover { color: #667eea; }
+        .btn {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: #fff; padding: 12px 30px; border: none; border-radius: 25px;
+            cursor: pointer; font-weight: bold; transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
+
+        .hero { text-align: center; padding: 60px 0; }
+        .hero h1 {
+            font-size: 42px; margin-bottom: 15px;
+            background: linear-gradient(90deg, #2d3748, #667eea);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p { font-size: 18px; color: #718096; margin-bottom: 30px; }
+
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; margin: 40px 0;
+        }
+        .stat-card {
+            background: #fff; padding: 25px; border-radius: 15px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-number {
+            font-size: 32px; font-weight: bold;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-label { color: #718096; font-size: 14px; margin-top: 5px; }
+
+        .filters { display: flex; justify-content: center; gap: 15px; margin: 40px 0; flex-wrap: wrap; }
+        .filter-btn {
+            background: #fff; color: #4a5568; padding: 10px 25px;
+            border: 2px solid #e2e8f0; border-radius: 25px; cursor: pointer;
+            font-weight: 600; transition: all 0.3s;
+        }
+        .filter-btn:hover { border-color: #667eea; color: #667eea; }
+        .filter-btn.active {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: #fff; border-color: transparent;
+        }
+
+        .predictions { margin: 60px 0; }
+        .section-title { font-size: 28px; margin-bottom: 30px; text-align: center; color: #2d3748; }
+        .predictions-grid { display: grid; gap: 20px; }
+        .prediction-card {
+            background: #fff; padding: 25px; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); transition: all 0.3s; cursor: pointer;
+        }
+        .prediction-card:hover { box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15); transform: translateX(5px); }
+        .prediction-card.hidden { display: none; }
+        .prediction-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .sport-badge {
+            background: linear-gradient(90deg, #667eea, #764ba2); color: #fff;
+            padding: 5px 15px; border-radius: 15px; font-size: 12px; font-weight: bold;
+        }
+        .match-time { color: #718096; font-size: 14px; }
+        .teams { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #2d3748; }
+        .prediction-info {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 15px; border-top: 1px solid #e2e8f0;
+        }
+        .prediction-type { color: #667eea; font-weight: bold; }
+        .confidence {
+            background: rgba(102, 126, 234, 0.1); color: #667eea;
+            padding: 8px 15px; border-radius: 10px; font-size: 14px; font-weight: 600;
+        }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #fff; padding: 40px; border-radius: 20px; max-width: 600px; width: 90%;
+            max-height: 80vh; overflow-y: auto; position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-close {
+            position: absolute; top: 20px; right: 20px; background: none; border: none;
+            font-size: 30px; cursor: pointer; color: #718096;
+        }
+        .modal-header { margin-bottom: 30px; }
+        .modal-title { font-size: 24px; margin-bottom: 10px; color: #2d3748; }
+        .modal-subtitle { color: #718096; font-size: 16px; }
+        .modal-section { margin-bottom: 25px; }
+        .modal-section h3 { font-size: 18px; margin-bottom: 15px; color: #2d3748; }
+        .analysis-item {
+            background: #f7fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .analysis-item strong { color: #667eea; }
+        .modal-prediction {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            padding: 25px; border-radius: 15px; text-align: center;
+        }
+        .modal-prediction h3 { font-size: 20px; margin-bottom: 10px; }
+        .confidence-large { font-size: 48px; font-weight: bold; margin: 15px 0; }
+
+        footer {
+            background: #fff; padding: 40px 0; margin-top: 80px; text-align: center;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.05);
+        }
+        footer p { color: #718096; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 32px; }
+            nav ul { display: none; }
+            .stats-bar { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">⚽ SportPredict</div>
+                <nav>
+                    <ul>
+                        <li><a href="#predictions">Прогнозы</a></li>
+                        <li><a href="#stats">Статистика</a></li>
+                    </ul>
+                </nav>
+                <button class="btn">Войти</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Умные прогнозы на спорт</h1>
+            <p>AI-алгоритмы анализируют форму, травмы и историю встреч для точных прогнозов</p>
+            <button class="btn" onclick="document.getElementById('predictions').scrollIntoView({behavior: 'smooth'})">Смотреть прогнозы</button>
+        </div>
+    </section>
+
+    <section class="container" id="stats">
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number">78%</div>
+                <div class="stat-label">Точность прогнозов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1,247</div>
+                <div class="stat-label">Прогнозов за месяц</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">+23%</div>
+                <div class="stat-label">ROI за месяц</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5,892</div>
+                <div class="stat-label">Активных пользователей</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="predictions" class="predictions">
+        <div class="container">
+            <h2 class="section-title">Актуальные прогнозы</h2>
+            
+            <div class="filters">
+                <button class="filter-btn active" data-sport="all">Все</button>
+                <button class="filter-btn" data-sport="football">⚽ Футбол</button>
+                <button class="filter-btn" data-sport="hockey">🏒 Хоккей</button>
+                <button class="filter-btn" data-sport="basketball">🏀 Баскетбол</button>
+                <button class="filter-btn" data-sport="tennis">🎾 Теннис</button>
+            </div>
+
+            <div class="predictions-grid" id="predictionsGrid">
+                <!-- Сюда JavaScript добавит карточки -->
+            </div>
+        </div>
+    </section>
+
+    <div class="modal" id="matchModal">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Команда 1 — Команда 2</h2>
+                <p class="modal-subtitle" id="modalSubtitle">⚽ Футбол • Сегодня, 20:00</p>
+            </div>
+            <div class="modal-section">
+                <h3>📊 Детальный анализ матча</h3>
+                <div id="analysisContainer"></div>
+            </div>
+            <div class="modal-prediction">
+                <h3>Наш прогноз</h3>
+                <div id="modalPrediction">Тотал больше 2.5</div>
+                <div class="confidence-large" id="modalConfidence">85%</div>
+                <p>Уверенность алгоритма</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>© 2026 SportPredict. Все права защищены.</p>
+            <p style="margin-top: 10px; font-size: 12px;">Прогнозы носят информационный характер. Играйте ответственно. 18+</p>
+        </div>
+    </footer>
+
+    <script>
+        // === БАЗА РЕАЛИСТИЧНЫХ МАТЧЕЙ ===
+        // Здесь собраны реальные команды и лиги для демонстрации работы системы
+        const realisticMatches = [
+            // ФУТБОЛ
+            {
+                id: 'f1', sport: 'football', emoji: '⚽', sportName: 'Футбол',
+                team1: 'Реал Мадрид', team2: 'Барселона',
+                time: 'Сегодня, 22:00', league: 'Ла Лига',
+                prediction: 'Тотал больше 2.5', confidence: 82,
+                analysis: [
+                    { title: 'Форма команд', text: 'Реал выиграл 4 из 5 последних матчей, Барселона — 3 из 5, но с трудом в обороне.' },
+                    { title: 'Личные встречи', text: 'В 7 из последних 10 Эль-Класико было забито минимум 3 гола.' },
+                    { title: 'Кадровая ситуация', text: 'У Барселоны под вопросом участие основного центрального защитника.' }
+                ]
+            },
+            {
+                id: 'f2', sport: 'football', emoji: '⚽', sportName: 'Футбол',
+                team1: 'Манчестер Сити', team2: 'Арсенал',
+                time: 'Завтра, 19:30', league: 'Английская Премьер-лига',
+                prediction: 'Победа Манчестер Сити', confidence: 75,
+                analysis: [
+                    { title: 'Форма команд', text: 'Сити не проигрывает дома уже 18 матчей подряд во всех турнирах.' },
+                    { title: 'Статистика', text: 'Арсенал пропустил в 4 из 5 последних выездных матчей против топ-6.' },
+                    { title: 'Мотивация', text: 'Ключевой матч за первое место в таблице, хозяева будут играть первым номером.' }
+                ]
+            },
+            {
+                id: 'f3', sport: 'football', emoji: '⚽', sportName: 'Футбол',
+                team1: 'Бавария', team2: 'Боруссия Д',
+                time: 'Суббота, 19:30', league: 'Бундеслига',
+                prediction: 'Обе забьют - Да', confidence: 88,
+                analysis: [
+                    { title: 'Форма команд', text: 'Обе команды демонстрируют атакующий футбол, но допускают ошибки в защите.' },
+                    { title: 'Личные встречи', text: 'Ставка "Обе забьют" проходила в 9 из последних 10 очных дерби.' }
+                ]
+            },
+            // ХОККЕЙ
+            {
+                id: 'h1', sport: 'hockey', emoji: '🏒', sportName: 'Хоккей',
+                team1: 'Тампа-Бэй Лайтнинг', team2: 'Торонто Мейпл Лифс',
+                time: 'Сегодня, 03:00', league: 'НХЛ',
+                prediction: 'Победа Тампы-Бэй (с учетом ОТ)', confidence: 71,
+                analysis: [
+                    { title: 'Форма команд', text: 'Тампа выиграла 3 из 4 последних домашних матчей.' },
+                    { title: 'Вратарская линия', text: 'Основной вратарь Торонто провел 2 матча подряд, возможна ротация.' },
+                    { title: 'Спецбригады', text: 'Реализация большинства у Тампы составляет 28% на домашнем льду.' }
+                ]
+            },
+            {
+                id: 'h2', sport: 'hockey', emoji: '🏒', sportName: 'Хоккей',
+                team1: 'ЦСКА', team2: 'СКА',
+                time: 'Завтра, 19:30', league: 'КХЛ',
+                prediction: 'Тотал меньше 5.5', confidence: 79,
+                analysis: [
+                    { title: 'Стиль игры', text: 'Армейское дерби традиционно отличается вязкой борьбой и вниманием к обороне.' },
+                    { title: 'Статистика', text: 'В 6 из 8 последних очных матчей было забито менее 5 шайб.' }
+                ]
+            },
+            // БАСКЕТБОЛ
+            {
+                id: 'b1', sport: 'basketball', emoji: '🏀', sportName: 'Баскетбол',
+                team1: 'Лос-Анджелес Лейкерс', team2: 'Бостон Селтикс',
+                time: 'Завтра, 05:00', league: 'НБА',
+                prediction: 'Победа Бостона с форой (-4.5)', confidence: 74,
+                analysis: [
+                    { title: 'Форма команд', text: 'Селтикс идут на первом месте в конференции с разницей очков +8.5 за матч.' },
+                    { title: 'Травмы', text: 'У Лейкерс под вопросом участие ключевого разыгрывающего из-за повреждения лодыжки.' }
+                ]
+            },
+            {
+                id: 'b2', sport: 'basketball', emoji: '🏀', sportName: 'Баскетбол',
+                team1: 'Реал Мадрид', team2: 'Панатинаикос',
+                time: 'Четверг, 21:00', league: 'Евролига',
+                prediction: 'Тотал больше 155.5', confidence: 81,
+                analysis: [
+                    { title: 'Стиль игры', text: 'Обе команды входят в топ-5 Евролиги по темпу игры и количеству владений.' },
+                    { title: 'Статистика', text: 'Средний тотал домашних матчей Реала в этом сезоне составляет 162 очка.' }
+                ]
+            },
+            // ТЕННИС
+            {
+                id: 't1', sport: 'tennis', emoji: '🎾', sportName: 'Теннис',
+                team1: 'Джокович Н.', team2: 'Синнер Я.',
+                time: 'Воскресенье, 16:00', league: 'ATP Finals',
+                prediction: 'Тотал геймов больше 22.5', confidence: 85,
+                analysis: [
+                    { title: 'Покрытие', text: 'Играют на харде, где оба теннисиста чувствуют себя максимально уверенно.' },
+                    { title: 'Личные встречи', text: 'Последние 3 матча между ними доходили до решающего третьего сета.' },
+                    { title: 'Подача', text: 'Процент выигранных очков на первой подаче у обоих игроков превышает 75%.' }
+                ]
+            }
+        ];
+
+        // === ОТРИСОВКА ИНТЕРФЕЙСА ===
+        const grid = document.getElementById('predictionsGrid');
+
+        function renderMatches(filter = 'all') {
+            grid.innerHTML = '';
+            const filtered = filter === 'all' ? realisticMatches : realisticMatches.filter(m => m.sport === filter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #718096; grid-column: 1/-1;">На сегодня матчей в этой категории пока нет.</p>';
+                return;
+            }
+
+            filtered.forEach(match => {
+                const card = document.createElement('div');
+                card.className = 'prediction-card';
+                card.dataset.sport = match.sport;
+                card.innerHTML = `
+                    <div class="prediction-header">
+                        <span class="sport-badge">${match.emoji} ${match.sportName}</span>
+                        <span class="match-time">${match.time}</span>
+                    </div>
+                    <div class="teams">${match.team1} — ${match.team2}</div>
+                    <div class="prediction-info">
+                        <span class="prediction-type">${match.prediction}</span>
+                        <span class="confidence">Уверенность: ${match.confidence}%</span>
+                    </div>
+                `;
+                card.addEventListener('click', () => openModal(match));
+                grid.appendChild(card);
+            });
+        }
+
+        // === МОДАЛЬНОЕ ОКНО ===
+        const modal = document.getElementById('matchModal');
+        
+        function openModal(match) {
+            document.getElementById('modalTitle').textContent = `${match.team1} — ${match.team2}`;
+            document.getElementById('modalSubtitle').textContent = `${match.emoji} ${match.sportName} • ${match.time} • ${match.league}`;
+            document.getElementById('modalPrediction').textContent = match.prediction;
+            document.getElementById('modalConfidence').textContent = `${match.confidence}%`;
+            
+            const container = document.getElementById('analysisContainer');
+            container.innerHTML = '';
+            match.analysis.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'analysis-item';
+                div.innerHTML = `<strong>${item.title}:</strong> ${item.text}`;
+                container.appendChild(div);
+            });
+            
+            modal.classList.add('active');
+        }
+
+        document.querySelector('.modal-close').addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+
+        // === ФИЛЬТРЫ ===
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderMatches(btn.dataset.sport);
+            });
+        });
+
+        // Запуск при загрузке
+        renderMatches();
+    </script>
+</body>
+</html>
